@@ -176,55 +176,83 @@ if __name__ == '__main__':
 
     # Option definitions for subparser DB
     parser_db = subparsers.add_parser("db")
-    parser_db.add_argument('-D', '--db',
+    parser_db.add_argument('--db',
                            help='MySQL/MariaDB database to backup',
                            default='wordpress')
 
-    parser_db.add_argument('-u', '--user',
+    parser_db.add_argument('--dbuser',
                            help='Username to log in',
                            type=str)
 
-    parser_db.add_argument('-P', '--port',
+    parser_db.add_argument('--dbport',
                            help='Port to conect to',
                            default=3306,
                            type=int)
 
-    parser_db.add_argument('-H', '--dbhost',
+    parser_db.add_argument('--dbhost',
                            help='Hostname of database server')
 
-    parser_db.add_argument('-E', '--exthost',
-                           help='Hostname of backup server')
-
-    parser_db.add_argument('-s', '--src',
-                           help='Source directory of Wordpress installation')
-
-    parser_db.add_argument('-d', '--dest',
-                           help='Destination directory to place backup')
-
-    parser_db.add_argument('-t', '--tmp',
-                           help='Temporary directory to place db backup')
-
-    parser_db.add_argument('-p', '--password',
+    parser_db.add_argument('--dbpasswd',
                            help='Ask for password for log into database',
                            action='store_true')
+
+    parser_db.add_argument('--exthost',
+                           help='Hostname of backup server')
+
+    parser_db.add_argument('--extport',
+                           type=int,
+                           default=22,
+                           help='port of backup server')
+
+    parser_db.add_argument('--extuser',
+                           help='user of backup server')
+
+    parser_db.add_argument('--extpasswd',
+                           help='Ask for password for log into database',
+                           action='store_true')
+
+    parser_db.add_argument('--src',
+                           help='Source directory of Wordpress installation')
+
+    parser_db.add_argument('--dest',
+                           help='Destination directory to place backup')
+
+    parser_db.add_argument('--tmp',
+                           help='Temporary directory to place db backup')
+
 
     # Option definitions for subparser WP
     parser_wp = subparsers.add_parser('wp')
 
-    parser_wp.add_argument('-P', '--port',
+    parser_wp.add_argument('--port',
                            help='Port to conect to',
                            default=22,
                            type=int)
 
-    parser_wp.add_argument('-H', '--host',
+    parser_wp.add_argument('--host',
                            help='Hostname to connect to')
 
-    parser_db.add_argument('-E', '--exthost',
+    parser_db.add_argument('--exthost',
                            help='Hostname of backup server')
 
-    parser_wp.add_argument('-u', '--user',
+    parser_wp.add_argument('--user',
                            help='Username to log in',
                            type=str)
+
+    parser_db.add_argument('--exthost',
+                           help='Hostname of backup server')
+
+    parser_db.add_argument('--extport',
+                           type=int,
+                           default=22,
+                           help='port of backup server')
+
+    parser_db.add_argument('--extuser',
+                           help='user of backup server')
+
+    parser_db.add_argument('--extpasswd',
+                           help='Ask for password for log into database',
+                           action='store_true')
 
     parser_wp.add_argument('-s', '--src',
                            help='Source directory of Wordpress installation')
@@ -233,6 +261,10 @@ if __name__ == '__main__':
                            help='Destination directory to place backup')
 
     parser_wp.add_argument('-p', '--password',
+                           help='Ask for password for log into database',
+                           action='store_true')
+
+    parser_wp.add_argument('--extpasswd',
                            help='Ask for password for log into database',
                            action='store_true')
 
