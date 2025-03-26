@@ -19,97 +19,122 @@ import subprocess
 import hashlib
 import logging
 from shutil import copytree, which
+import paramiko
+from scp import SCPClient
 
-mysql_dump_exec = which("mysql")
 logger = logging.getLogger(__name__)
-src = ""
-dest = ""
+
 date = datetime.today().strftime('%Y%m%d%H%M%S')
 files = {}
 
+class Bakctl:
+    def init(
+            self, 
+            host: str = "", 
+            port: int = 0, 
+            username: str = "", 
+            password: str = "",
+            source: str = "",
+            destionation: str = ""
+        ):
+        self.host = host
+        self.port = port
+        self.username = username
+        self.password = password
+        self.source = source
+        self.destination = destination
+        self.mysqldump = which("mysqldump")
 
-def create_db_backup():
-    """
-    Function initializes mysqldump to create db dumps.
+    def createSSHClient(self):
+        client = paramiko.SSHClient()
+        client.load_system_host_keys()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(self.host, self.port, self.username, self.password)
+        return client
 
-    """
-    try:
-        # Calling mysql_dump with subprocess module with
-        # arguments given by user.
-        subprocess.run(
-            mysql_dump_exec,
-            shell=True,
-            capture_output=True
-            )
-    except subprocess.CalledProcessError as sp_err:
-        logger.error("Error while trying to make DB backup: ", sp_err)
-        logger.error("Exitting")
-        exit(1)
+    def create_db_backup(self):
+        """
+        Function initializes mysqldump to create db dumps.
 
-
-def calculate_hash(filename: str = None):
-    """
-    Function calculating the filehash. With the filehash it is
-    possible to check and verify the integrity of a file.
-    """
-
-    # Create hash object
-    hash_object = hashlib.sha256()
-
-    # Open the file in binary mode
-    with open(filename, 'rb') as file:
-        # Read the entire file content
-        file_content = file.read()
-
-        # Update the hash object with the file content
-        hash_object.update(file_content)
-
-    # Return the hexadecimal representation of the hash
-    return hash_object.hexdigest()
+        """
+        try:
+            # Calling mysql_dump with subprocess module with
+            # arguments given by user.
+            subprocess.run(
+                mysql_dump_exec,
+                shell=True,
+                capture_output=True
+                )
+        except subprocess.CalledProcessError as sp_err:
+            logger.error("Error while trying to make DB backup: ", sp_err)
+            logger.error("Exitting")
+            exit(1)
 
 
-def verify_hash(filename: str = None,
+    def calculate_hash(self, filename: str = None) -> hash:
+        """
+        Function calculating the filehash. With the filehash it is
+        possible to check and verify the integrity of a file.
+        """
+
+        # Create hash object
+        hash_object = hashlib.sha256()
+
+        # Open the file in binary mode
+        with open(filename, 'rb') as file:
+            # Read the entire file content
+            file_content = file.read()
+
+            # Update the hash object with the file content
+            hash_object.update(file_content)
+
+        # Return the hexadecimal representation of the hash
+        return hash_object.hexdigest()
+
+
+    def verify_hash(self, filename: str = None,
         filehash_src: hash = None,
-        filehash_dest: hash = None):
-    """
-    Function for checking the hash of copied file.
-    """
-    ...
+        filehash_dest: hash = None) -> bool:
+        """
+        Function for checking the hash of copied file.
+        """
+        return True
 
 
-def create_wp_backup(src: str = None, dest: str = None):
-    """
-    Function for creating a Wordpress backup
-    """
+    def create_wp_backup(self, src: str = None, dest: str = None) -> bool:
+        """
+        Function for creating a Wordpress backup
+        """
 
-    try:
-        logger.info("Starting to creating Wordpress backup")
-        results_src = {}
-        results_dest = {}
+        try:
+            logger.info("Starting to creating Wordpress backup")
+            results_src = {}
+            results_dest = {}
 
-        for root, _, files in os.walk(src):
-            for filename in filter(files, '*'):
-                filepath = os.path.join(root, filename)
-                results[filepath] = calculate_hash(filepath)
-                
-        shutil.copytree(src, dest)
+            for root, _, files in os.walk(src):
+                for filename in filter(files, '*'):
+                    filepath = os.path.join(root, filename)
+                    results[filepath] = calculate_hash(filepath)
+                    
+            shutil.copytree(src, dest)
 
-        for root, _, files in os.walk(dest):
-            for filename in filter(files, '*'):
-                filepath = os.path.join(root, filename)
-                results[filepath] = calculate_hash(filepath)
-        
+            for root, _, files in os.walk(dest):
+                for filename in filter(files, '*'):
+                    filepath = os.path.join(root, filename)
+                    results[filepath] = calculate_hash(filepath)
+            
 
-        return results
+            return True
 
-    # If error throw exception and print error message
-    except IOError as io_err:
-        print("Error while making file backup: ", io_err)
-        exit(1)
+        # If error throw exception and print error message
+        except IOError as io_err:
+            print("Error while making file backup: ", io_err)
+            exit(1)
 
 
 def main():
     if cli.action == 'database':
+        backup = Bakctl()
         create_db_backup()
 
     else:
@@ -137,19 +162,17 @@ if __name__ == '__main__':
                         )
 
     parser.add_argument("-u", "--username",
-                        help="Username to log into the database",
+                        help="Username to log in",
                         type=str
                         )
 
     parser.add_argument("-P", "--port",
-                        help="MySQL/MariaDB port",
+                        help="Port to conect to",
                         type=int,
-                        default=33006
                         )
 
     parser.add_argument("-H", "--host",
-                        help="MySQL/MariaDB host",
-                        default='127.0.0.1'
+                        help="Hostname to connect to",
                         )
 
     parser.add_argument("-s", "--src",
@@ -192,10 +215,11 @@ mysql_dump args: Host: %s, Port: %s, Username: %s, Database %s',
                      cli.db)
 
     if cli.action == 'wordpress':
-        if cli.src:
-            src = cli.src
-        if cli.dest:
-            dest = cli.dest
-        logger.debug(f"Copying: Source: {cli.src} Dest: {cli.dest}")
+        logger.debug('\
+                Copying: Source: %s Dest: %s:%d:%s',
+                    cli.src,
+                    cli.host,
+                    cli.port,
+                    cli.dest)
 
-    main()
+    #main()
