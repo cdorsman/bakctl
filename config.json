@@ -1,0 +1,28 @@
+{
+  "general": [
+    {
+  	"tmpDir": "/tmp/baktmp",
+  	"destination": "/tmp/result",
+  	"wordpressBackup": 1,
+  	"databaseBackup": 1
+    }
+  ],
+  "wordpress" : [
+    {
+      "host": "127.0.0.1",
+      "port": 22,
+      "username": "chris",
+      "privateKey": "/home/chris/.ssh/cdorsman_github_id_ed25519",
+      "source": "/var/www/wordpress",
+      "wpDest": "wp/"
+    }
+  ],
+  "database":
+  [
+    {
+      "dbUser": "bubba",
+      "dbName": "wordpress",
+      "dbDest": "db/"
+    }
+  ]
+}
