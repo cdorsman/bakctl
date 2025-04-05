@@ -1,73 +1,62 @@
-# bakctl
-bakctl is a interface for backuping MySQL or MariaDB database and Wordpress installation 
+# bakctl.py
+bakctl.py is a interface for backuping MySQL or MariaDB database and Wordpress installation 
+
+## How does bakctl.py work
+### WordPress
+bakctl.py will copy and compress the installation folder in a temporary folder that is indicated in config.json
+
+### Database
+bakctl.py will look if there is a mysqldump or mariadb installed on the system. It will then create a database dump
+
+### Checking
+In both cases it will generate sha256 hashes before and after transfering the compressed file backup. These hashes will then be compared as a integrity check.
 
 ## Installation
 Install the prerequisites
 `sudo apt install python3-paramiko python3-scp mysql-client`
 
-Clone the repository and change into it's directory
-`git clone git@github.com:cdorsman/bakctl.git && cd bakctl`
+Clone the repository and change into it's directory  
+`git clone git@github.com:cdorsman/bakctl.git && cd bakctl.py 
 
-Execute the following command to install bakctl into /usr/local/bin
-`sudo install -m 755 bakctl.py /usr/local/bin`
+Execute the following oneliner to do the following
+- Create /etc/bakctl.py folder
+- Move config.json to /etc/bakctl
+- Install bakctl.py into /usr/local/bin
+
+`sudo -s <<< 'mkdir /etc/bakctl.py && mv config.json && install -m 755 bakctl.py /usr/local/bin'`
+
 
 ## Usage
+You can execute bakctl.py in two ways:  
+- Execute bakctl.py without arguments.
+  It will look for /etc/bakctl.py config.json
+- Execute bakctl.py with a JSON-configuration file like so
+`bakctl.py ./custom-config.json`
 
-There are two action modes: database and wordpress. To define a mode, you can use the
-'db' for database or 'wp' for Wordpress
+## bakctl.py configuration
+You can configure bakctl.py by editting /etc/bakctl/config.json
 
-Within the modes it is possible to define the following:
+Configuration file consists of three sections:
+- general
+- wordpress
+- database 
 
-db:
-- dbhost: Database host. 
-- dbport: database port. 
-- db: Name of the database
-- dbuser: Username to log into the database
-- dbpasswd: Ask DB password
-- exthost: external backup host
-- extport: port of the external backup host
-- extuser: User to connect with
-- extpasswd: Ask password for extuser
-- tmp: Temporary directory to place the dump before transfer. Default is /tmp
-- dest: Destination directory
+Each section has their own configuration items
 
-When invoked it will create a database dump into the temporary directory, where it will 
-be compressed in GZIP-format. When finished, it will create a file hash and send the GZIP-file to
-the given back-up server over SSH. As finalization, it will create another file hash, what will
-be compared with the previous generated file hash for possible corruption. 
+### Configuration items per sections
+general  
+tmp [ path ]: location of temporary folder
+destination [ path ]: destination folder on the external server
+wordpressBackup [ integer ]: Enable back-up for WordPress. Set to '1' to enable.  
+databaseBackup (integer): Enable backup for database Set to '1' to enable
 
-
-wp:
-- host: Wordpress host. 
-- port: SSH port 
-- username: Username to log into the server
-- extpasswd: Ask password for user
-- exthost: external backup host
-- extport: port of the external backup host
-- extuser: User to connect with
-- extpasswd: Ask for password for extuser
-- src: Source directory of the Wordpress installation 
-- dest: Destination directory
-
-When invoked it will create a GZIP-file from the Wordpress installation. When finished, it will create a file hash 
-and be sended the given back-up server over SSH. As finalization, it will create another file hash, what will
-be compared with the previous generated file hash for possible corruption. 
-
-
-## Examples
-
-To backup a Wordpress installation on a local server to external backup server and ask for password:
-`bakctl --action wordpress -H hostname or ip -P 22 -u user_name -p -s /var/www/wordpress -d /backup/dir`
-
-To backup a database on a local server to external backup server and ask for password:
-`bakctl.py db --db wordpress \
-	--dbhost 127.0.0.1 \
-	--dbport 3306 \
-	--dbuser bubba \
-	--db wordpress \
-	--dbpasswd  \
-	--exthost 192.168.50.81 \ 
-	--extport 22 \
-	--extuser bubba \ 
-	--extpasswd`
+wordpress
+host [ string or IP-adres ] : IP or hostnaam of the externe back-upserver
+port [ integer ]: SSH-poort om verbinding te maken met de externe back-upserver
+username [ string ]: Gebruiker voor inloggen op de externe back-upserver
+privateKey [ path ]: Location naar de ed25519-private key voor SSH-authenticatie.
+source [ path ]: Locatie naar de WordPress-installatie
+database
+dbName [ string ]: Naam van de database
+dbUser [ string ]: Gebruikersnaam voor inloggen op de database
 

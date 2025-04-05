@@ -1,0 +1,4 @@
+cryptography==3.4.8
+flake8==4.0.1
+paramiko==3.5.1
+scp==0.15.0
